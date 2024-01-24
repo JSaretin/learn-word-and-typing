@@ -1,4 +1,5 @@
-# Typin
+# learn-word-and-typing
+
 
 [typin-demo.webm](https://github.com/JSaretin/learn-word-and-typing/assets/47713814/1c69d21f-7332-48d5-bc7b-b770cd799e99)
 
