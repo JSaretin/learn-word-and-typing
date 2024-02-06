@@ -25,7 +25,7 @@
 
 	const wLength = Number($page.url.searchParams.get('words') || 1);
 	const isUpper = $page.url.searchParams.get('is-upper') === 'true';
-	let targetWordPerMinute = Number($page.url.searchParams.get('target-wpm') || 100) / 60;
+	let targetWordPerMinute = Number($page.url.searchParams.get('target-wpm') || 170) / 60;
 	let isNonsence = $page.url.searchParams.get('is-nonsense') === 'true';
 	const wordLength = wLength > 10 ? 10 : wLength;
 
@@ -185,6 +185,8 @@
 		}
 	}
 
+	let likeWords: { [key: string]: boolean } = {};
+
 	onMount(async () => {
 		setTimeout(pickWord);
 		winSound = new Audio('/win.wav');
@@ -198,28 +200,29 @@
 <div
 	class="p-4 w-full h-screen flex justify-center align-middle place-items-center bg-neutral-800 text-neutral-500 overflow-y-scroll"
 >
-	<div class="fixed top-0 right-0 bg-neutral-900 font-mono text-2xl p-6 rounded-md">
+	<div class="fixed top-0 left-0 bg-neutral-900 font-mono text-2xl p-6 rounded-md">
 		{(targetWordPerMinute * 60).toFixed(0)}CPM
 	</div>
+
+	<button class={'fixed top-0 right-0 px-4 py-1 bg-neutral-700 rounded-md text-neutral-900 '}>
+		like words
+	</button>
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<!-- svelte-ignore a11y-mouse-events-have-key-events -->
-	<div
-		bind:this={displayWord}
-		class="relative"
-		on:mouseover={() => {
-			showMeaning = true;
-		}}
-		on:focus={() => {
-			showMeaning = true;
-		}}
-		on:mouseleave={() => {
-			showMeaning = false;
-		}}
-	>
+	<div bind:this={displayWord} class="relative">
 		<div class="absolute top-0 left-0 -translate-y-full w-full flex justify-center align-middle">
-			<span class="text-2xl bg-neutral-600 text-neutral-800 px-6 py-2 rounded-md">{timeRemaining.toFixed(1)}s</span>
+			<span class="text-2xl bg-neutral-600 text-neutral-800 px-6 py-2 rounded-md"
+				>{timeRemaining.toFixed(1)}s</span
+			>
 		</div>
-		<h1 class="font-bold text-4xl lg:text-9xl">
+		<h1 class="font-bold text-4xl lg:text-9xl relative">
+			<button
+				class={'absolute top-0 right-0 w-6 h-6 rounded-full border-2 border-orange-400 translate-x-10 outline-none ' +
+					(likeWords[word] ? 'bg-orange-400' : '')}
+				on:click={() => {
+					likeWords[word] = !likeWords[word];
+				}}
+			/>
 			{#each word as w, _}
 				{#if w === ' '}
 					<span
@@ -229,7 +232,7 @@
 				{:else}
 					<span
 						class={feedBackWord[_] === true
-							? 'text-neutral-300'
+							? 'text-green-300'
 							: feedBackWord[_] === false
 							? 'text-red-400'
 							: ''}>{w}</span
