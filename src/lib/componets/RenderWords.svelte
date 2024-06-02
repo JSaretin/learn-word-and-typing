@@ -1,11 +1,9 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import type { WordData } from '$lib/structure';
+	import RenderWord from './RenderWord.svelte';
 
 	export let title: string;
-	export let currentWord: string;
-	export let words: string[];
-
-	const emiter = createEventDispatcher();
+	export let words: WordData[];
 </script>
 
 <div class="flex flex-col w-full">
@@ -15,15 +13,16 @@
 		{title}
 	</h2>
 
-	<div class="flex flex-col overflow-y-scroll">
+	<div class="flex flex-col overflow-y-scroll gap-1 p-2">
 		{#each words as word, index}
-			<button
-				on:click={() => {
-					emiter('selectword', word);
-				}}
-				class={'p-1 text-lg font-bold ' +
-					(word === currentWord ? 'text-green-400' : 'text-neutral-400')}>{word}</button
-			>
+			<RenderWord bind:word />
 		{/each}
+	</div>
+
+	<div class="w-full p-1">
+		<button
+			class="p-2 rounded-md w-full text-green-400 border-2 border-green-400 hover:bg-green-400 hover:text-white"
+			>Practice</button
+		>
 	</div>
 </div>

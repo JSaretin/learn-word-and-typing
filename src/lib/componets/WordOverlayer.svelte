@@ -26,11 +26,10 @@
 			{#if show}
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
-					fill="none"
 					viewBox="0 0 24 24"
 					stroke-width="1.5"
 					stroke="currentColor"
-					class="w-full h-full"
+					class="w-full h-full fill-yellow-500 stroke-neutral-900"
 				>
 					<path
 						stroke-linecap="round"
@@ -44,7 +43,7 @@
 					fill="none"
 					viewBox="0 0 24 24"
 					stroke-width="1.5"
-					class="w-full h-full stroke-yellow-500"
+					class="w-full h-full stroke-neutral-500"
 				>
 					<path
 						stroke-linecap="round"

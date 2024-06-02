@@ -1,30 +1,26 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
-	import type { Writable } from 'svelte/store';
 	import Say from './Say.svelte';
+	import type { WordData } from '$lib/structure';
 
-	export let word: string;
-
-	const wordsMeaning: Writable<{
-		[key: string]: any;
-	}> = getContext('wordsMeaning');
+	export let word: WordData;
 </script>
 
 <div
-	class="w-[400px] max-h-[250px] h-fit overflow-y-scroll bg-neutral-600 p-2 rounded-xl mx-auto bg-opacity-70 backdrop-blur-sm no-scrollbar"
+	class="max-w-[400px] w-full max-h-[250px] h-fit overflow-y-scroll bg-neutral-600 p-2 rounded-xl mx-auto bg-opacity-70 backdrop-blur-sm no-scrollbar"
 >
-	<Say {word} />
-	{#if $wordsMeaning[word] === undefined}
+	<!-- <Say {word.word} /> -->
+	{#if !word.checked_meaning}
 		<div class="w-full h-full flex justify-center align-middle place-items-center">
 			<span class="italic text-neutral-500"> loading.... </span>
 		</div>
-	{:else if Boolean($wordsMeaning[word]?.notFound)}
+	{:else if Boolean(word.meaning?.notFound)}
 		<div class="w-full h-full flex justify-center align-middle place-items-center">
 			<span class="italic text-neutral-500"> not found </span>
 		</div>
 	{:else}
 		<div class="flex flex-col gap-1 text-neutral-400">
-			{#each $wordsMeaning[word] as meaning, _}
+			{#each word?.meaning || [] as meaning, _}
 				{#if meaning?.phonetic !== undefined}
 					<div
 						class="flex align-middle place-items-center gap-4 bg-neutral-600 rounded-md p-1 text-blue-400 font-bold w-fit"
