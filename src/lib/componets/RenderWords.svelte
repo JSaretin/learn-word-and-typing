@@ -13,7 +13,7 @@
 		{title}
 	</h2>
 
-	<div class="flex flex-col overflow-y-scroll gap-1 p-2">
+	<div class="flex flex-1 flex-col overflow-y-scroll gap-1 p-2">
 		{#each words as word, index}
 			<RenderWord bind:word />
 		{/each}
