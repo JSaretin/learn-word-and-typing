@@ -44,6 +44,7 @@
 	let showTypedWords = false;
 
 	const findMeaning = async (pickedWord: WordData) => {
+		if (!navigator.onLine) return;
 		if (pickedWord.checked_meaning) return;
 		const req = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${pickedWord.word}`);
 		if (!req.ok) {
