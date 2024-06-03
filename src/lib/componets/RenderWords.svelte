@@ -2,10 +2,24 @@
 	import type { WordData } from '$lib/structure';
 	import RenderWord from './RenderWord.svelte';
 
+	let searchWord = '';
 	export let searchIsActive: boolean;
-	export let searchWord: string;
+
 	export let title: string;
 	export let words: WordData[];
+	let displayWords: WordData[] = words;
+
+	function runSearch() {
+		if (!Boolean(searchWord)) displayWords = words;
+
+		displayWords = words.filter(
+			(w) => w.word.includes(searchWord) || JSON.stringify(w.meaning).includes(searchWord)
+		);
+	}
+
+	$: if (displayWords.length !== words.length) {
+		runSearch();
+	}
 </script>
 
 <div class="flex flex-col w-full">
@@ -24,7 +38,7 @@
 			on:blur={() => {
 				searchIsActive = false;
 			}}
-			on:input
+			on:input={runSearch}
 			type="text"
 			placeholder="search"
 			class="p-2 text-white font-mono w-full rounded-md bg-neutral-600 border-none outline-none"
@@ -32,7 +46,7 @@
 	</div>
 
 	<div class="flex flex-1 flex-col overflow-y-scroll gap-1 p-2">
-		{#each words as word, index}
+		{#each displayWords as word, index}
 			<RenderWord bind:word />
 		{/each}
 	</div>

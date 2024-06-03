@@ -15,7 +15,6 @@
 	const db: Writable<IDBDatabase> = writable();
 
 	let searchIsActive: boolean;
-	let searchWord = '';
 
 	const words = defaultWords
 		.map((value) => ({ value, sort: Math.random() }))
@@ -365,15 +364,6 @@
 	}
 
 	setContext('toggleLikeWord', toggleLikeWord);
-
-	function runSearch(search: string, wds: WordData[]) {
-		if (!Boolean(search)) return wds;
-
-		return wds.filter(
-			(w) => w.word.includes(search) || JSON.stringify(w.meaning).includes(searchWord)
-		);
-	}
-	$: displayWord = browser ? runSearch(searchWord, $allWords) : [];
 </script>
 
 <svelte:head>
@@ -387,7 +377,7 @@
 		loading
 	{:else}
 		<WordOverlayer bind:show={showTypedWords} isReverse={true}>
-			<RenderWords title="Seen Words" words={displayWord} bind:searchIsActive bind:searchWord />
+			<RenderWords title="Seen Words" words={$allWords} bind:searchIsActive />
 		</WordOverlayer>
 
 		<div class="relative">
