@@ -8,9 +8,13 @@
 	import RenderWords from '$lib/componets/RenderWords.svelte';
 	import WordOverlayer from '$lib/componets/WordOverlayer.svelte';
 	import type { WordData } from '$lib/structure';
+	import { stringify } from 'postcss';
 
 	const allWords: Writable<WordData[]> = writable([]);
 	const db: Writable<IDBDatabase> = writable();
+
+	let searchIsActive: boolean;
+	let searchWord = '';
 
 	const words = defaultWords
 		.map((value) => ({ value, sort: Math.random() }))
@@ -178,6 +182,9 @@
 		}
 		if (ctrlKeyDown) {
 			return true;
+		}
+		if (searchIsActive) {
+			return;
 		}
 
 		event.preventDefault();
@@ -357,6 +364,15 @@
 	}
 
 	setContext('toggleLikeWord', toggleLikeWord);
+
+	function runSearch(search: string, wds: WordData[]) {
+		if (!Boolean(search)) return wds;
+
+		return wds.filter(
+			(w) => w.word.includes(search) || JSON.stringify(w.meaning).includes(searchWord)
+		);
+	}
+	$: displayWord = runSearch(searchWord, $allWords);
 </script>
 
 <svelte:head>
@@ -370,7 +386,13 @@
 		loading
 	{:else}
 		<WordOverlayer bind:show={showTypedWords} isReverse={true}>
-			<RenderWords title="Seen Words" words={$allWords} />
+			<RenderWords
+				title="Seen Words"
+				words={displayWord}
+				bind:searchIsActive
+				bind:searchWord
+				on:input={runSearch}
+			/>
 		</WordOverlayer>
 
 		<div class="relative">

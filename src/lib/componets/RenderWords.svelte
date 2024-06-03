@@ -2,6 +2,8 @@
 	import type { WordData } from '$lib/structure';
 	import RenderWord from './RenderWord.svelte';
 
+	export let searchIsActive: boolean;
+	export let searchWord: string;
 	export let title: string;
 	export let words: WordData[];
 </script>
@@ -12,6 +14,22 @@
 	>
 		{title}
 	</h2>
+
+	<div class="w-full p-1">
+		<input
+			bind:value={searchWord}
+			on:click={() => {
+				searchIsActive = true;
+			}}
+			on:blur={() => {
+				searchIsActive = false;
+			}}
+			on:input
+			type="text"
+			placeholder="search"
+			class="p-2 text-white font-mono w-full rounded-md bg-neutral-600 border-none outline-none"
+		/>
+	</div>
 
 	<div class="flex flex-1 flex-col overflow-y-scroll gap-1 p-2">
 		{#each words as word, index}
