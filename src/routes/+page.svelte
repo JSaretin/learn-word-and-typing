@@ -9,6 +9,7 @@
 	import WordOverlayer from '$lib/componets/WordOverlayer.svelte';
 	import type { WordData } from '$lib/structure';
 	import { stringify } from 'postcss';
+	import { browser } from '$app/environment';
 
 	const allWords: Writable<WordData[]> = writable([]);
 	const db: Writable<IDBDatabase> = writable();
@@ -372,7 +373,7 @@
 			(w) => w.word.includes(search) || JSON.stringify(w.meaning).includes(searchWord)
 		);
 	}
-	$: displayWord = runSearch(searchWord, $allWords);
+	$: displayWord = browser && runSearch(searchWord, $allWords);
 </script>
 
 <svelte:head>
