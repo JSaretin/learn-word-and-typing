@@ -12,7 +12,7 @@
 
 	async function toggleExpand() {
 		if (!word.checked_meaning) {
-			findMeaning;
+			findMeaning(word);
 		}
 		expand = !expand;
 	}
