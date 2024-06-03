@@ -7,12 +7,12 @@
 
 	let expand = false;
 
-	const findMeaning = getContext('findMeaning') as (w: WordData) => Promise<void>;
+	const findMeaning = getContext('findMeaning') as (w: WordData, b: boolean) => Promise<void>;
 	const toggleLikeWord = getContext('toggleLikeWord') as (w: WordData) => void;
 
 	async function toggleExpand() {
 		if (!word.checked_meaning) {
-			findMeaning(word);
+			findMeaning(word, true);
 		}
 		expand = !expand;
 	}
