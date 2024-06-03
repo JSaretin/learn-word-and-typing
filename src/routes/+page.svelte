@@ -312,6 +312,14 @@
 		wrongSound = new Audio('/wrong.wav');
 		blockKey = false;
 		$allWords = await fetchAllData();
+
+		if (navigator.onLine) {
+			setTimeout(async () => {
+				await Promise.all(
+					$allWords.filter((w) => !w.checked_meaning).map(async (w) => await findMeaning(w))
+				);
+			});
+		}
 	});
 
 	async function updateData(data: WordData) {
