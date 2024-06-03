@@ -373,7 +373,7 @@
 			(w) => w.word.includes(search) || JSON.stringify(w.meaning).includes(searchWord)
 		);
 	}
-	$: displayWord = browser && runSearch(searchWord, $allWords);
+	$: displayWord = browser ? runSearch(searchWord, $allWords) : [];
 </script>
 
 <svelte:head>
