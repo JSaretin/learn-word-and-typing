@@ -2,27 +2,34 @@
 	import { getContext } from 'svelte';
 	import WordMeaning from '../../routes/WordMeaning.svelte';
 	import Liker from './Liker.svelte';
-	import type { Writable } from 'svelte/store';
 	import type { WordData } from '$lib/structure';
 	export let word: WordData;
 
 	let expand = false;
 
+	const findMeaning = getContext('findMeaning') as (w: WordData) => Promise<void>;
 	const toggleLikeWord = getContext('toggleLikeWord') as (w: WordData) => void;
+
+	async function toggleExpand() {
+		if (!word.checked_meaning) {
+			findMeaning;
+		}
+		expand = !expand;
+	}
 </script>
 
 <div class="bg-neutral-600 w-full rounded-md">
 	<div class="w-full flex justify-between">
 		<button
 			class="p-2 font-mono flex-1 w-full text-left text-lg text-neutral-200 font-medium"
-			on:click={() => {
-				expand = !expand;
-			}}
+			on:click={toggleExpand}
 		>
 			{word.word}
 
 			{#if word.checked_meaning}
 				<span class="bg-green-700 text-white p-1 rounded-md text-xs">checked</span>
+			{:else}
+				<span class="bg-yellow-700 text-white p-1 rounded-md text-xs">unchecked</span>
 			{/if}
 		</button>
 		<button on:click={() => toggleLikeWord(word)} class="mr-2 w-6 text-gray-300">

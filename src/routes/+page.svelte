@@ -10,10 +10,7 @@
 	import type { WordData } from '$lib/structure';
 
 	const allWords: Writable<WordData[]> = writable([]);
-	const likedWords: Writable<WordData[]> = writable([]);
 	const db: Writable<IDBDatabase> = writable();
-
-	// setContext('allWords', allWords);
 
 	const words = defaultWords
 		.map((value) => ({ value, sort: Math.random() }))
@@ -31,7 +28,6 @@
 	let feedBackWord: (string | boolean)[] = [];
 
 	const wLength = Number($page.url.searchParams.get('words') || 1);
-	const isUpper = $page.url.searchParams.get('is-upper') === 'true';
 	let targetWordPerMinute = Number($page.url.searchParams.get('target-wpm') || 170) / 60;
 	const wordLength = wLength > 10 ? 10 : wLength;
 
@@ -45,7 +41,6 @@
 	let wrongSound: HTMLAudioElement;
 
 	let ctrlKeyDown = false;
-	let showLikedWords = false;
 	let showTypedWords = false;
 
 	const findMeaning = async (pickedWord: WordData) => {
@@ -69,6 +64,8 @@
 			return [...previousValues, currentvalue];
 		}, []);
 	};
+
+	setContext('findMeaning', findMeaning);
 
 	function pickWord() {
 		showMeaning = false;
@@ -356,13 +353,7 @@
 	{#if word === undefined}
 		loading
 	{:else}
-		<WordOverlayer
-			bind:show={showTypedWords}
-			isReverse={true}
-			on:show={() => {
-				// showLikedWords = false;
-			}}
-		>
+		<WordOverlayer bind:show={showTypedWords} isReverse={true}>
 			<RenderWords title="Seen Words" words={$allWords} />
 		</WordOverlayer>
 
