@@ -373,7 +373,7 @@
 			(w) => w.word.includes(search) || JSON.stringify(w.meaning).includes(searchWord)
 		);
 	}
-	$: displayWord = browser ? runSearch(searchWord, $allWords) : [];
+	// $: displayWord = browser ? runSearch(searchWord, $allWords) : [];
 </script>
 
 <svelte:head>
@@ -387,13 +387,7 @@
 		loading
 	{:else}
 		<WordOverlayer bind:show={showTypedWords} isReverse={true}>
-			<RenderWords
-				title="Seen Words"
-				words={displayWord}
-				bind:searchIsActive
-				bind:searchWord
-				on:input={runSearch}
-			/>
+			<RenderWords title="Seen Words" words={$allWords} bind:searchIsActive bind:searchWord />
 		</WordOverlayer>
 
 		<div class="relative">
