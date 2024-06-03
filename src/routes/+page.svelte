@@ -43,13 +43,20 @@
 	let ctrlKeyDown = false;
 	let showTypedWords = false;
 
-	const findMeaning = async (pickedWord: WordData) => {
+	const findMeaning = async (pickedWord: WordData, dontSort: boolean = false) => {
 		if (!navigator.onLine) return;
 		if (pickedWord.checked_meaning) return;
 		const req = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${pickedWord.word}`);
 		if (!req.ok) {
 			pickedWord.meaning = { notFound: true };
-			$allWords = [pickedWord, ...$allWords.filter((w) => w.word !== pickedWord.word)];
+			if (dontSort) {
+				$allWords = $allWords.map((w) => {
+					if (w.word !== pickedWord.word) return w;
+					return pickedWord;
+				});
+			} else {
+				$allWords = [pickedWord, ...$allWords.filter((w) => w.word !== pickedWord.word)];
+			}
 			return;
 		}
 		const res = await req.json();
@@ -316,7 +323,7 @@
 		if (navigator.onLine) {
 			setTimeout(async () => {
 				await Promise.all(
-					$allWords.filter((w) => !w.checked_meaning).map(async (w) => await findMeaning(w))
+					$allWords.filter((w) => !w.checked_meaning).map(async (w) => await findMeaning(w, true))
 				);
 			});
 		}
