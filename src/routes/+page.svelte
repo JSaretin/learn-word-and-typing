@@ -8,7 +8,6 @@
 	import RenderWords from '$lib/componets/RenderWords.svelte';
 	import WordOverlayer from '$lib/componets/WordOverlayer.svelte';
 	import type { WordData } from '$lib/structure';
-	import { stringify } from 'postcss';
 	import { browser } from '$app/environment';
 
 	const allWords: Writable<WordData[]> = writable([]);
@@ -373,7 +372,7 @@
 <div
 	class="p-4 w-full h-screen flex justify-center align-middle place-items-center bg-neutral-800 text-neutral-500 overflow-y-scroll"
 >
-	{#if word === undefined}
+	{#if !browser && word === undefined}
 		loading
 	{:else}
 		<WordOverlayer bind:show={showTypedWords} isReverse={true}>
