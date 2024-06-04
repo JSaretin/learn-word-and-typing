@@ -7,19 +7,19 @@
 
 	export let title: string;
 	export let words: WordData[];
-	let displayWords: WordData[] = words;
+	$: displayWords = words;
 
-	function runSearch() {
-		if (!Boolean(searchWord)) displayWords = words;
+	function runSearch(wds: WordData[]) {
+		if (!Boolean(searchWord)) return wds;
 
-		displayWords = words.filter(
+		return wds.filter(
 			(w) => w.word.includes(searchWord) || JSON.stringify(w.meaning).includes(searchWord)
 		);
 	}
 
-	$: if (displayWords.length !== words.length) {
-		runSearch();
-	}
+	// $: if (displayWords.length !== words.length) {
+	// 	runSearch();
+	// }
 </script>
 
 <div class="flex flex-col w-full">
@@ -38,7 +38,7 @@
 			on:blur={() => {
 				searchIsActive = false;
 			}}
-			on:input={runSearch}
+			on:input={() => (displayWords = runSearch(words))}
 			type="text"
 			placeholder="search"
 			class="p-2 text-white font-mono w-full rounded-md bg-neutral-600 border-none outline-none"
@@ -46,7 +46,7 @@
 	</div>
 
 	<div class="flex flex-1 flex-col overflow-y-scroll gap-1 p-2">
-		{#each displayWords as word, index}
+		{#each runSearch(displayWords) as word, index}
 			<RenderWord bind:word />
 		{/each}
 	</div>
