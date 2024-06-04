@@ -26,10 +26,10 @@
 		>
 			{word.word}
 
-			{#if word.checked_meaning}
+			{#if word.checked_meaning && word.meaning?.notFound === undefined}
 				<span class="bg-green-700 text-white p-1 rounded-md text-xs">checked</span>
 			{:else}
-				<span class="bg-yellow-700 text-white p-1 rounded-md text-xs">unchecked</span>
+				<span class="bg-yellow-700 text-white p-1 rounded-md text-xs">unfound</span>
 			{/if}
 		</button>
 		<button on:click={() => toggleLikeWord(word)} class="mr-2 w-6 text-gray-300">
@@ -37,7 +37,7 @@
 		</button>
 	</div>
 
-	{#if expand}
+	{#if expand && word.meaning?.notFound === undefined}
 		<div class="">
 			<WordMeaning {word} />
 		</div>

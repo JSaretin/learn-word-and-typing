@@ -45,12 +45,25 @@
 	let ctrlKeyDown = false;
 	let showTypedWords = false;
 
+	async function fetchWordMeaning(word: string): Promise<void | typeof Object> {
+		const req = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+		if (!req.ok) return;
+		return await req.json();
+	}
+
 	const findMeaning = async (pickedWord: WordData, dontSort: boolean = false) => {
 		if (!navigator.onLine) return;
 		if (pickedWord.checked_meaning) return;
-		const req = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${pickedWord.word}`);
-		if (!req.ok) {
+
+		const nonsense = ['nessess', 'ness', 'al', 'ly', 'ed', 'er', 'ing'];
+		const hasNonsense = nonsense.filter((n) => pickedWord.word.endsWith(n));
+		let toCheck = [pickedWord.word, ...hasNonsense.map((n) => pickedWord.word.replace(n, ''))];
+		const meanings = await Promise.all(toCheck.map(async (w) => await fetchWordMeaning(w)));
+		const validMeanings = meanings.filter((m) => m !== undefined);
+
+		if (validMeanings.length == 0) {
 			pickedWord.meaning = { notFound: true };
+
 			if (dontSort) {
 				$allWords = $allWords.map((w) => {
 					if (w.word !== pickedWord.word) return w;
@@ -59,15 +72,18 @@
 			} else {
 				$allWords = [pickedWord, ...$allWords.filter((w) => w.word !== pickedWord.word)];
 			}
+			pickedWord.checked_meaning = true;
+			updateData(pickedWord);
 			return;
 		}
-		const res = await req.json();
+
 		$allWords = $allWords.reduce((previousValues: WordData[], currentvalue: WordData) => {
 			if (currentvalue.word === pickedWord.word) {
-				currentvalue.meaning = res;
 				currentvalue.checked_meaning = true;
+				currentvalue.meaning = validMeanings[0];
+				console.log(currentvalue.meaning);
 				if (word.word === pickedWord.word) {
-					word = { ...word, ...currentvalue };
+					word = currentvalue;
 				}
 				updateData(currentvalue);
 			}
@@ -90,14 +106,13 @@
 	async function selectWord(pickedWord: string) {
 		let savedWord = await getData(pickedWord);
 		if (savedWord === undefined) {
-			savedWord = {
+			word = {
 				checked_meaning: false,
 				disliked: false,
 				liked: false,
 				meaning: {},
 				word: pickedWord
 			};
-			word = savedWord;
 			$allWords = [word, ...$allWords];
 			findMeaning(word);
 
@@ -319,11 +334,11 @@
 
 	onMount(async () => {
 		await openDatabase();
+		$allWords = await fetchAllData();
 		pickWord();
 		winSound = new Audio('/win.wav');
 		wrongSound = new Audio('/wrong.wav');
 		blockKey = false;
-		$allWords = await fetchAllData();
 
 		if (navigator.onLine) {
 			setTimeout(async () => {
@@ -352,7 +367,7 @@
 		if (toggleFor.word === word.word) {
 			word = { ...word, ...toggleFor };
 		}
-		updateData(toggleFor);
+		// await updateData(toggleFor);
 		$allWords = $allWords.reduce((prevValue: WordData[], currentValue: WordData) => {
 			if (currentValue.word === toggleFor.word) {
 				currentValue = toggleFor;
