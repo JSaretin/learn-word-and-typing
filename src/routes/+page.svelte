@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { words as defaultWords } from './words';
+	import { words as defaultWords } from '$lib/dictionary';
 	import { page } from '$app/stores';
 	import { onMount, setContext } from 'svelte';
 	import WordMeaning from './WordMeaning.svelte';
@@ -7,23 +7,23 @@
 	import RenderTypedWord from '$lib/componets/RenderTypedWord.svelte';
 	import RenderWords from '$lib/componets/RenderWords.svelte';
 	import WordOverlayer from '$lib/componets/WordOverlayer.svelte';
-	import type { WordData } from '$lib/structure';
+	import type { RawWordData, WordData } from '$lib/structure';
 
-	const allWords: Writable<WordData[]> = writable([]);
+	const words: Writable<RawWordData[]> = writable();
+	const seenWords: Writable<WordData[]> = writable([]);
+
 	const db: Writable<IDBDatabase> = writable();
 
-	let searchIsActive: boolean;
+	let targetCharacters: string = '';
+	let practiceSeenWords: boolean;
+	let hideUnknowWords: boolean;
 
-	const words = defaultWords
-		.map((value) => ({ value, sort: Math.random() }))
-		.sort((a, b) => a.sort - b.sort)
-		.map(({ value }) => value);
+	let searchIsActive: boolean;
 
 	let titleText = 'Boost your typing skill | Typin';
 
 	let ongoingTypedWord = '';
 	let timeRemaining = 0;
-	let showMeaning = false;
 
 	let word: WordData;
 	let index = 0;
@@ -45,84 +45,38 @@
 	let ctrlKeyDown = false;
 	let showTypedWords = false;
 
-	async function fetchWordMeaning(word: string): Promise<void | typeof Object> {
-		const req = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-		if (!req.ok) return;
-		return await req.json();
-	}
-
-	const findMeaning = async (pickedWord: WordData, dontSort: boolean = false) => {
-		if (!navigator.onLine) return;
-		if (pickedWord.checked_meaning) return;
-
-		const nonsense = ['nessess', 'ness', 'al', 'ly', 'ed', 'er', 'ing'];
-		const hasNonsense = nonsense.filter((n) => pickedWord.word.endsWith(n));
-		let toCheck = [pickedWord.word, ...hasNonsense.map((n) => pickedWord.word.replace(n, ''))];
-		const meanings = await Promise.all(toCheck.map(async (w) => await fetchWordMeaning(w)));
-		const validMeanings = meanings.filter((m) => m !== undefined);
-
-		if (validMeanings.length == 0) {
-			pickedWord.meaning = { notFound: true };
-
-			if (dontSort) {
-				$allWords = $allWords.map((w) => {
-					if (w.word !== pickedWord.word) return w;
-					return pickedWord;
-				});
-			} else {
-				$allWords = [pickedWord, ...$allWords.filter((w) => w.word !== pickedWord.word)];
-			}
-			pickedWord.checked_meaning = true;
-			updateData(pickedWord);
-			return;
-		}
-
-		$allWords = $allWords.reduce((previousValues: WordData[], currentvalue: WordData) => {
-			if (currentvalue.word === pickedWord.word) {
-				currentvalue.checked_meaning = true;
-				currentvalue.meaning = validMeanings[0];
-				console.log(currentvalue.meaning);
-				if (word.word === pickedWord.word) {
-					word = currentvalue;
-				}
-				updateData(currentvalue);
-			}
-			return [...previousValues, currentvalue];
-		}, []);
-	};
-
-	setContext('findMeaning', findMeaning);
-
 	function pickWord() {
-		showMeaning = false;
-		let pickedWord: string = '';
-		if (index === words.length - 1) index = 0;
-		pickedWord = words.slice(index, index + wordLength).join(' ');
-
-		index += wordLength;
+		if (index >= $words.length - 1) index = 0;
+		let pickedWord = $words[index];
+		index++;
 		selectWord(pickedWord);
 	}
 
-	async function selectWord(pickedWord: string) {
-		let savedWord = await getData(pickedWord);
-		if (savedWord === undefined) {
-			word = {
-				checked_meaning: false,
-				disliked: false,
-				liked: false,
-				meaning: {},
-				word: pickedWord
-			};
-			$allWords = [word, ...$allWords];
-			findMeaning(word);
+	async function getOrSaveWord(pickedWord: RawWordData) {
+		let savedWord = await getData(pickedWord.word);
+		if (savedWord !== undefined) return savedWord;
 
-			feedBackWord = Array(pickedWord.length);
-			timeRemaining = pickedWord.length / targetWordPerMinute;
-			addData(word);
-		}
+		let tempWord = {
+			checked_meaning: true,
+			disliked: false,
+			liked: false,
+			meaning: pickedWord,
+			word: pickedWord.word
+		};
+		addData(tempWord);
+		return tempWord;
+	}
+
+	async function selectWord(pickedWord: RawWordData) {
+		word = await getOrSaveWord(pickedWord);
+
+		$seenWords = [word, ...$seenWords.filter((w) => w.word !== pickedWord.word)];
+
+		$words = [pickedWord, ...$words.filter((w) => w.word !== pickedWord.word)];
+		feedBackWord = Array(pickedWord.word.length);
+		timeRemaining = pickedWord.word.length / targetWordPerMinute;
 
 		started = false;
-		showMeaning = true;
 	}
 
 	function countDownTimer() {
@@ -196,7 +150,7 @@
 		if (ctrlKeyDown) {
 			return true;
 		}
-		if (searchIsActive) {
+		if (searchIsActive || settingCharacters) {
 			return;
 		}
 
@@ -333,20 +287,19 @@
 	}
 
 	onMount(async () => {
+		targetCharacters = localStorage.getItem('targetCharacters') || '';
+		practiceSeenWords = Boolean(localStorage.getItem('practiceSeenWords') || '');
+		hideUnknowWords = Boolean(localStorage.getItem('hideUnknowWords') || '');
+
 		await openDatabase();
-		$allWords = await fetchAllData();
+		$seenWords = await fetchAllData();
+
+		filterWords();
+
 		pickWord();
 		winSound = new Audio('/win.wav');
 		wrongSound = new Audio('/wrong.wav');
 		blockKey = false;
-
-		if (navigator.onLine) {
-			setTimeout(async () => {
-				await Promise.all(
-					$allWords.filter((w) => !w.checked_meaning).map(async (w) => await findMeaning(w, true))
-				);
-			});
-		}
 	});
 
 	async function updateData(data: WordData) {
@@ -367,8 +320,8 @@
 		if (toggleFor.word === word.word) {
 			word = { ...word, ...toggleFor };
 		}
-		// await updateData(toggleFor);
-		$allWords = $allWords.reduce((prevValue: WordData[], currentValue: WordData) => {
+		await updateData(toggleFor);
+		$seenWords = $seenWords.reduce((prevValue: WordData[], currentValue: WordData) => {
 			if (currentValue.word === toggleFor.word) {
 				currentValue = toggleFor;
 			}
@@ -377,6 +330,35 @@
 	}
 
 	setContext('toggleLikeWord', toggleLikeWord);
+
+	function filterWords() {
+		$words = defaultWords
+			.filter((w) => {
+				if (!Boolean(targetCharacters)) return true;
+				for (const cw of targetCharacters) {
+					if (!w.word.includes(cw)) return false;
+				}
+				return true;
+			})
+			.map((value) => ({ value, sort: Math.random() }))
+			.sort((a, b) => a.sort - b.sort)
+			.map(({ value }) => value);
+	}
+
+	function saveTargetCharacters() {
+		localStorage.setItem('targetCharacters', targetCharacters);
+		filterWords();
+		pickWord();
+	}
+
+	function savePracticeSeenWords() {
+		localStorage.setItem('practiceSeenWords', practiceSeenWords ? '1' : '');
+		filterWords();
+		pickWord();
+	}
+
+	let showSettings: boolean;
+	let settingCharacters: boolean;
 </script>
 
 <svelte:head>
@@ -384,11 +366,56 @@
 </svelte:head>
 <svelte:window on:keydown={handleKeyPressed} on:keyup={handleKeyReleased} />
 
+{#if showSettings}
+	<!-- svelte-ignore a11y-click-events-have-key-events -->
+	<!-- svelte-ignore a11y-no-static-element-interactions -->
+	<div
+		on:click|self={() => {
+			settingCharacters = false;
+			showSettings = false;
+		}}
+		class="fixed inset-0 z-[105] bg-neutral-800 bg-opacity-80 backdrop-blur-sm flex justify-center align-middle place-items-center p-4"
+	>
+		<div class="max-w-lg w-full rounded-md p-4">
+			<div class="flex flex-col gap-2">
+				<div class="flex justify-between">
+					Target characters
+					<span class="p-1 text-white bg-neutral-600 rounded-md font-mono">{$words.length}</span>
+				</div>
+				<input
+					type="text"
+					on:focus={() => (settingCharacters = true)}
+					on:blur={() => (settingCharacters = false)}
+					class="p-2 rounded-md bg-neutral-600 text-white font-mono"
+					bind:value={targetCharacters}
+					on:input={saveTargetCharacters}
+				/>
+				<label class="flex justify-between">
+					typed words
+					<input
+						type="checkbox"
+						bind:checked={practiceSeenWords}
+						on:change={savePracticeSeenWords}
+					/>
+				</label>
+			</div>
+		</div>
+	</div>
+{/if}
+
 {#if word === undefined}
 	loading
 {:else}
+	<div class="absolute top-4 left-4">
+		<button
+			on:click={() => {
+				showSettings = true;
+			}}>Setting</button
+		>
+	</div>
+
 	<WordOverlayer bind:show={showTypedWords} isReverse={true}>
-		<RenderWords title="Seen Words" words={$allWords} bind:searchIsActive />
+		<RenderWords title="Seen Words" words={$seenWords} bind:searchIsActive />
 	</WordOverlayer>
 
 	<div class="relative">
@@ -406,11 +433,9 @@
 			}}
 		/>
 
-		{#if showMeaning}
-			<div class="absolute bottom-0 left-0 w-full translate-y-full pt-6">
-				<WordMeaning {word} />
-			</div>
-		{/if}
+		<div class="absolute bottom-0 left-0 w-full translate-y-full pt-6">
+			<WordMeaning bind:word />
+		</div>
 	</div>
 
 	<div class="bg-neutral-900 fixed bottom-0 left-0 w-full overflow-hidden">

@@ -11,5 +11,6 @@
 <style lang="postcss">
 	:global(html) {
 		background-color: theme(colors.neutral.800);
+		font-family: theme(fontFamily.Montserrat);
 	}
 </style>

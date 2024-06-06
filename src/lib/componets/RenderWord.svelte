@@ -7,13 +7,9 @@
 
 	let expand = false;
 
-	const findMeaning = getContext('findMeaning') as (w: WordData, b: boolean) => Promise<void>;
 	const toggleLikeWord = getContext('toggleLikeWord') as (w: WordData) => void;
 
 	async function toggleExpand() {
-		if (!word.checked_meaning) {
-			findMeaning(word, true);
-		}
 		expand = !expand;
 	}
 </script>
@@ -25,19 +21,13 @@
 			on:click={toggleExpand}
 		>
 			{word.word}
-
-			{#if word.checked_meaning && word.meaning?.notFound === undefined}
-				<span class="bg-green-700 text-white p-1 rounded-md text-xs">checked</span>
-			{:else}
-				<span class="bg-yellow-700 text-white p-1 rounded-md text-xs">unfound</span>
-			{/if}
 		</button>
 		<button on:click={() => toggleLikeWord(word)} class="mr-2 w-6 text-gray-300">
 			<Liker liked={word.liked} />
 		</button>
 	</div>
 
-	{#if expand && word.meaning?.notFound === undefined}
+	{#if expand}
 		<div class="">
 			<WordMeaning {word} />
 		</div>

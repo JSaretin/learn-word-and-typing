@@ -1,25 +1,48 @@
 <script lang="ts">
-	import type { WordData } from '$lib/structure';
+	import type { RawWordData, WordData } from '$lib/structure';
 	import RenderWord from './RenderWord.svelte';
 
 	let searchWord = '';
-	export let searchIsActive: boolean;
 
+	export let searchIsActive: boolean;
 	export let title: string;
 	export let words: WordData[];
-	$: displayWords = words;
+	let displayWords = words;
 
-	function runSearch(wds: WordData[]) {
-		if (!Boolean(searchWord)) return wds;
+	const workerCode = URL.createObjectURL(
+		new Blob(
+			[
+				`
+					self.onmessage = function(e) {
+						const { words, searchWord } = e.data;
+						self.postMessage(words.filter((w) => {
+							let toCheck = [w.word, ...w.meaning.antonyms, ...w.meaning.synonyms];
 
-		return wds.filter(
-			(w) => w.word.includes(searchWord) || JSON.stringify(w.meaning).includes(searchWord)
-		);
-	}
+							for (const d of w.meaning.meanings) {
+								if (typeof d === 'string') {
+									toCheck = [d, ...toCheck];
+								} else {
+									toCheck = [d[1], ...toCheck];
+									toCheck = [...d[2], ...toCheck];
+									toCheck = [...d[3], ...toCheck];
+								}
+							}
+							return toCheck.some((w) => w.includes(searchWord));
+						}));
+					};
+				`
+			],
+			{ type: 'application/javascript' }
+		)
+	);
 
-	// $: if (displayWords.length !== words.length) {
-	// 	runSearch();
-	// }
+	const worker = new Worker(workerCode);
+
+	worker.onmessage = (e) => {
+		displayWords = e.data;
+	};
+
+	$: worker.postMessage({ words, searchWord });
 </script>
 
 <div class="flex flex-col w-full">
@@ -38,7 +61,6 @@
 			on:blur={() => {
 				searchIsActive = false;
 			}}
-			on:input={() => (displayWords = runSearch(words))}
 			type="text"
 			placeholder="search"
 			class="p-2 text-white font-mono w-full rounded-md bg-neutral-600 border-none outline-none"
@@ -46,15 +68,8 @@
 	</div>
 
 	<div class="flex flex-1 flex-col overflow-y-scroll gap-1 p-2">
-		{#each runSearch(displayWords) as word, index}
+		{#each displayWords as word, index}
 			<RenderWord bind:word />
 		{/each}
-	</div>
-
-	<div class="w-full p-1">
-		<button
-			class="p-2 rounded-md w-full text-green-400 border-2 border-green-400 hover:bg-green-400 hover:text-white"
-			>Practice</button
-		>
 	</div>
 </div>

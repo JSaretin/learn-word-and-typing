@@ -29,7 +29,7 @@
 					viewBox="0 0 24 24"
 					stroke-width="1.5"
 					stroke="currentColor"
-					class="w-full h-full fill-yellow-500 stroke-neutral-900"
+					class="w-full h-full opacity-25 hover:opacity-100 fill-yellow-500 stroke-neutral-900"
 				>
 					<path
 						stroke-linecap="round"
