@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
-	import WordMeaning from '../../routes/WordMeaning.svelte';
+	import WordMeaning from './WordMeaning.svelte';
 	import Liker from './Liker.svelte';
 	import type { WordData } from '$lib/structure';
 	export let word: WordData;
