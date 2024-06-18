@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { verses } from './kjv';
 	import RenderTypedWord from '$lib/componets/RenderTypedWord.svelte';
+	import { json } from '@sveltejs/kit';
 
-	let words = verses
-		.map((value) => ({ value, sort: Math.random() }))
-		.sort((a, b) => a.sort - b.sort)
-		.map(({ value }) => value);
+	let words: {
+		book_name: string;
+		book: number;
+		chapter: number;
+		verse: number;
+		text: string;
+	}[] = [];
 
 	let word: {
 		book_name: string;
@@ -29,11 +32,11 @@
 		timeRemaining = pickedWord.text.length / targetWordPerMinute;
 	}
 
-	
 	onMount(async () => {
+		const req = await fetch('/kjv.json');
+		words = (await req.json()).results;
 		pickWord();
 	});
-
 </script>
 
 <div class="max-w-3xl w-full">
