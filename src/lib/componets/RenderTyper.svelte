@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { words as defaultWords } from '$lib/dictionary';
 	import { page } from '$app/stores';
 	import { onMount, setContext } from 'svelte';
 	import WordMeaning from './WordMeaning.svelte';
@@ -9,7 +8,8 @@
 	import WordOverlayer from '$lib/componets/WordOverlayer.svelte';
 	import type { RawWordData, WordData } from '$lib/structure';
 
-	const words: Writable<RawWordData[]> = writable();
+	let defaultWords: RawWordData[] = [];
+	const words: Writable<RawWordData[]> = writable(defaultWords);
 	const seenWords: Writable<WordData[]> = writable([]);
 
 	const db: Writable<IDBDatabase> = writable();
@@ -226,6 +226,9 @@
 	setContext('toggleLikeWord', toggleLikeWord);
 
 	onMount(async () => {
+		const req = await fetch('/dictionary.json');
+		defaultWords = (await req.json()).results;
+
 		targetCharacters = localStorage.getItem('targetCharacters') || '';
 		practiceSeenWords = Boolean(localStorage.getItem('practiceSeenWords') || '');
 

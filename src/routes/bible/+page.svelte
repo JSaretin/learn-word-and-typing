@@ -34,7 +34,10 @@
 
 	onMount(async () => {
 		const req = await fetch('/kjv.json');
-		words = (await req.json()).results;
+		words = ((await req.json()).results as any[])
+			.map((value) => ({ value, sort: Math.random() }))
+			.sort((a, b) => a.sort - b.sort)
+			.map(({ value }) => value);
 		pickWord();
 	});
 </script>
