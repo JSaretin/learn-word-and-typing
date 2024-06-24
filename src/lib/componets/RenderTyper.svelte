@@ -27,7 +27,7 @@
 	let word: WordData;
 	let index = 0;
 
-	let targetWordPerMinute = Number($page.url.searchParams.get('target-wpm') || 170) / 60;
+	let targetCharacterPerSecond: number;
 
 	let beforeNextStage = 0;
 
@@ -40,7 +40,7 @@
 		word = await getOrSaveWord(pickedWord);
 		$seenWords = [word, ...$seenWords.filter((w) => w.word !== pickedWord.word)];
 		$words = [pickedWord, ...$words.filter((w) => w.word !== pickedWord.word)];
-		timeRemaining = pickedWord.word.length / targetWordPerMinute;
+		timeRemaining = pickedWord.word.length / Number(targetCharacterPerSecond);
 	}
 
 	function pickWord() {
@@ -58,7 +58,9 @@
 	function handleWin() {
 		beforeNextStage += 2;
 		if (beforeNextStage >= 100) {
-			targetWordPerMinute += (10 * ((20 * targetWordPerMinute) / 100)) / 100;
+			targetCharacterPerSecond =
+				Number(targetCharacterPerSecond) + (Number(targetCharacterPerSecond) * 5) / 100;
+			saveWordPerMinute();
 			beforeNextStage = 0;
 		}
 		pickWord();
@@ -225,16 +227,25 @@
 
 	setContext('toggleLikeWord', toggleLikeWord);
 
+	function saveWordPerMinute() {
+		localStorage.setItem('targetCharacterPerSecond', Number(targetCharacterPerSecond).toString());
+		if (word !== undefined) {
+			selectWord(word.meaning);
+		}
+	}
+
 	onMount(async () => {
 		const req = await fetch('/dictionary.json');
 		defaultWords = (await req.json()).results;
 
+		targetCharacterPerSecond = Number(localStorage.getItem('targetCharacterPerSecond') || '2');
 		targetCharacters = localStorage.getItem('targetCharacters') || '';
 		practiceSeenWords = Boolean(localStorage.getItem('practiceSeenWords') || '');
 
 		await openDatabase();
 		$seenWords = await fetchAllData();
 
+		saveWordPerMinute();
 		filterWords();
 		pickWord();
 	});
@@ -268,6 +279,17 @@
 					bind:value={targetCharacters}
 					on:input={saveTargetCharacters}
 				/>
+				<label class="flex justify-between">
+					word per minute
+					<input
+						class="p-2 rounded-md w-[90px] text-center bg-neutral-600 text-white font-mono"
+						type="text"
+						on:focus={() => (settingCharacters = true)}
+						on:blur={() => (settingCharacters = false)}
+						bind:value={targetCharacterPerSecond}
+						on:change={saveWordPerMinute}
+					/>
+				</label>
 				<label class="flex justify-between">
 					typed words
 					<input
