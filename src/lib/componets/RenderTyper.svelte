@@ -1,14 +1,13 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import { onMount, setContext } from 'svelte';
 	import WordMeaning from './WordMeaning.svelte';
 	import { writable, type Writable } from 'svelte/store';
 	import RenderTypedWord from '$lib/componets/RenderTypedWord.svelte';
 	import RenderWords from '$lib/componets/RenderWords.svelte';
 	import WordOverlayer from '$lib/componets/WordOverlayer.svelte';
+	import { words as defaultWords } from '$lib/dict';
 	import type { RawWordData, WordData } from '$lib/structure';
 
-	let defaultWords: RawWordData[] = [];
 	const words: Writable<RawWordData[]> = writable(defaultWords);
 	const seenWords: Writable<WordData[]> = writable([]);
 
@@ -235,9 +234,6 @@
 	}
 
 	onMount(async () => {
-		const req = await fetch('/dictionary.json');
-		defaultWords = (await req.json()).results;
-
 		targetCharacterPerSecond = Number(localStorage.getItem('targetCharacterPerSecond') || '2');
 		targetCharacters = localStorage.getItem('targetCharacters') || '';
 		practiceSeenWords = Boolean(localStorage.getItem('practiceSeenWords') || '');
